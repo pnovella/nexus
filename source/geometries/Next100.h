@@ -25,7 +25,8 @@ namespace nexus {
   class Next100Ics;
   class Next100InnerElements;
   class LSCHallA;
-
+  class Next100MuonVeto;
+  
   class Next100: public GeometryBase
   {
   public:
@@ -60,7 +61,8 @@ namespace nexus {
     Next100Vessel*    vessel_;
     Next100Ics*       ics_;
     Next100InnerElements* inner_elements_;
-
+    Next100MuonVeto* muon_veto_;
+    
     BoxPointSampler* lab_gen_; ///< Vertex generator
 
     /// Messenger for the definition of control commands
@@ -74,6 +76,10 @@ namespace nexus {
 
     /// Whether or not to build LSC HallA.
     G4bool lab_walls_;
+
+    /// Whether or not to build muon veto.
+    G4bool veto_walls_;
+    
   };
 
 } // end namespace nexus

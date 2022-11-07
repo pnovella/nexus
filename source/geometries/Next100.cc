@@ -14,6 +14,7 @@
 #include "Next100Vessel.h"
 #include "Next100Ics.h"
 #include "Next100InnerElements.h"
+#include "Next100MuonVeto.h"
 #include "FactoryBase.h"
 
 #include <G4GenericMessenger.hh>
@@ -44,7 +45,8 @@ namespace nexus {
     gate_sapphire_wdw_distance_  ((1458.2 - 0.1) * mm),
 
     specific_vertex_{},
-    lab_walls_(false)
+    lab_walls_(false),
+    veto_walls_(false)
   {
 
     msg_ = new G4GenericMessenger(this, "/Geometry/Next100/",
@@ -54,6 +56,8 @@ namespace nexus {
       "Set generation vertex.");
 
     msg_->DeclareProperty("lab_walls", lab_walls_, "Placement of Hall A walls");
+
+    msg_->DeclareProperty("veto_walls", veto_walls_, "Placement of Muon Veto");
 
   // The following methods must be invoked in this particular
   // order since some of them depend on the previous ones
@@ -73,6 +77,9 @@ namespace nexus {
   // Inner Elements
   inner_elements_ = new Next100InnerElements();
 
+  // Muon Veto
+  muon_veto_ = new Next100MuonVeto();
+  
   }
 
 
@@ -84,6 +91,7 @@ namespace nexus {
     delete shielding_;
     delete lab_gen_;
     delete hallA_walls_;
+    delete muon_veto_;
   }
 
 
@@ -116,6 +124,15 @@ namespace nexus {
     // (i.e., this is the volume that will be placed in the world)
     this->SetLogicalVolume(lab_logic_);
 
+    //! muon veto !!!!?????????????????????
+    if (veto_walls_){
+      muon_veto_->Construct();
+      G4LogicalVolume* muon_veto_logic = muon_veto_->GetLogicalVolume();
+      G4ThreeVector veto_dims = muon_veto_->GetDimensions();
+      new G4PVPlacement(0,veto_dims, muon_veto_logic,
+			"MUON_VETO", lab_logic_, false, 0); 
+    }
+    
     // VESSEL (initialize first since it defines EL position)
     vessel_->SetELtoTPdistance(gate_tracking_plane_distance_);
     vessel_->Construct();
