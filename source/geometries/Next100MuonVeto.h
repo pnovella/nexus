@@ -33,13 +33,16 @@ namespace nexus {
     /// Builder
     void Construct();
 
-
+    G4ThreeVector GetDimensions() const;
+    
   private:
 
     // Dimensions
     G4double wall_x_, wall_y_, wall_z_;
     G4double door_x_, door_y_, door_z_;
     G4double roof_x_, roof_y_, roof_z_;
+
+    G4double max_step_size_;
     
     G4bool visibility_;
     G4bool verbosity_;
@@ -47,6 +50,8 @@ namespace nexus {
     // Messenger for the definition of control commands
     G4GenericMessenger* msg_;
 
+    
+    
   };
 
  
