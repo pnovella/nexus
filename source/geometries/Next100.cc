@@ -14,8 +14,14 @@
 #include "Next100Vessel.h"
 #include "Next100Ics.h"
 #include "Next100InnerElements.h"
-#include "Next100MuonVeto.h"
+//#include "Next100MuonVeto.h"
 #include "FactoryBase.h"
+
+// for muon veto 
+#include "IonizationSD.h"
+#include <G4SDManager.hh>
+#include "Visibilities.h"
+//---
 
 #include <G4GenericMessenger.hh>
 #include <G4Box.hh>
@@ -36,17 +42,33 @@ namespace nexus {
   Next100::Next100():
     GeometryBase(),
     // Lab dimensions
-    lab_size_ (5. * m),
+    //lab_size_ (5. * m),
+    lab_size_ (10. * m), // increased to hold muon veto
 
     // common used variables in geomety components
     // 0.1 mm grid thickness
     // note that if grid thickness change it must be also changed in Next100FieldCage.cc
     gate_tracking_plane_distance_((26.1 + 0.1)   * mm),
     gate_sapphire_wdw_distance_  ((1458.2 - 0.1) * mm),
-
+    
     specific_vertex_{},
     lab_walls_(false),
-    veto_walls_(false)
+    veto_walls_(false),
+
+    //--- muon veto dims and conf -----//
+    mv_wall_x_ {4.0 * cm},
+    mv_wall_y_ {207.5 * cm},
+    mv_wall_z_ {418.0 * cm},
+    mv_door_x_ {198.4 * cm},
+    mv_door_y_ {207.5 * cm},
+    mv_door_z_ {4.0 * cm},
+    mv_roof_x_ {198.4  * cm},
+    mv_roof_y_ {4.0 * cm},
+    mv_roof_z_ {418.0 * cm},
+    mv_visibility_(false),
+    mv_verbosity_(false)
+    //------------------------//
+
   {
 
     msg_ = new G4GenericMessenger(this, "/Geometry/Next100/",
@@ -57,9 +79,12 @@ namespace nexus {
 
     msg_->DeclareProperty("lab_walls", lab_walls_, "Placement of Hall A walls");
 
+    // muon veto properties
     msg_->DeclareProperty("veto_walls", veto_walls_, "Placement of Muon Veto");
-
-  // The following methods must be invoked in this particular
+    msg_->DeclareProperty("muonveto_vis", mv_visibility_, "Muon Veto Visibility");
+    msg_->DeclareProperty("muonveto_verbosity", mv_verbosity_, "Muon VetoVerbosity");
+    
+   // The following methods must be invoked in this particular
   // order since some of them depend on the previous ones
 
   // Shielding
@@ -78,7 +103,7 @@ namespace nexus {
   inner_elements_ = new Next100InnerElements();
 
   // Muon Veto
-  muon_veto_ = new Next100MuonVeto();
+  //muon_veto_ = new Next100MuonVeto();
   
   }
 
@@ -91,7 +116,7 @@ namespace nexus {
     delete shielding_;
     delete lab_gen_;
     delete hallA_walls_;
-    delete muon_veto_;
+    //delete muon_veto_;
   }
 
 
@@ -124,15 +149,6 @@ namespace nexus {
     // (i.e., this is the volume that will be placed in the world)
     this->SetLogicalVolume(lab_logic_);
 
-    //! muon veto !!!!?????????????????????
-    if (veto_walls_){
-      muon_veto_->Construct();
-      G4LogicalVolume* muon_veto_logic = muon_veto_->GetLogicalVolume();
-      G4ThreeVector veto_dims = muon_veto_->GetDimensions();
-      new G4PVPlacement(0,veto_dims, muon_veto_logic,
-			"MUON_VETO", lab_logic_, false, 0); 
-    }
-    
     // VESSEL (initialize first since it defines EL position)
     vessel_->SetELtoTPdistance(gate_tracking_plane_distance_);
     vessel_->Construct();
@@ -183,6 +199,9 @@ namespace nexus {
       new G4PVPlacement(0, gate_pos, shielding_logic, "LEAD_BOX", lab_logic_, false, 0);
     }
 
+    //! muon veto !!!!
+    if (veto_walls_){ ConstructMuonVeto(); }
+   
     //// VERTEX GENERATORS
     lab_gen_ =
       new BoxPointSampler(lab_size_ - 1.*m, lab_size_ - 1.*m, lab_size_  - 1.*m, 1.*m,
@@ -278,4 +297,87 @@ namespace nexus {
     return vertex;
   }
 
+  void Next100::ConstructMuonVeto(){
+
+    //muon_veto_->Construct();
+    //G4LogicalVolume* muon_veto_logic = muon_veto_->GetLogicalVolume();
+    //G4ThreeVector veto_dims = muon_veto_->GetDimensions();
+    //new G4PVPlacement(0,veto_dims, muon_veto_logic,
+    //		"MUON_VETO", lab_logic_, false, 0, true);
+
+    //! define muon veto planes
+    G4Box* wallr_box_solid = new G4Box("WALLR_BOX", mv_wall_x_/2., mv_wall_y_/2., mv_wall_z_/2.);
+    G4Box* walll_box_solid = new G4Box("WALLL_BOX", mv_wall_x_/2., mv_wall_y_/2., mv_wall_z_/2.);
+    G4Box* doorf_box_solid = new G4Box("DOORF_BOX", mv_door_x_/2., mv_door_y_/2., mv_door_z_/2.);
+    G4Box* doorb_box_solid = new G4Box("DOORB_BOX", mv_door_x_/2., mv_door_y_/2., mv_door_z_/2.);
+    G4Box* roof_box_solid  = new G4Box("ROOF_BOX", mv_roof_x_/2., mv_roof_y_/2., mv_roof_z_/2.);
+    
+    G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_POLYSTYRENE");
+        
+    G4LogicalVolume* wallr_box_logic = new G4LogicalVolume(wallr_box_solid,mat,"WALLR_BOX");
+    G4LogicalVolume* walll_box_logic = new G4LogicalVolume(walll_box_solid,mat,"WALLL_BOX");
+    G4LogicalVolume* doorf_box_logic = new G4LogicalVolume(doorf_box_solid,mat,"DOORF_BOX");
+    G4LogicalVolume* doorb_box_logic = new G4LogicalVolume(doorb_box_solid,mat,"DOORB_BOX");
+    G4LogicalVolume* roof_box_logic  = new G4LogicalVolume(roof_box_solid,mat,"ROOF_BOX");
+
+    G4ThreeVector gate_pos(0., 0., -gate_zpos_in_vessel_);
+    //G4ThreeVector gate_pos(0., 0., 0);
+    
+    new G4PVPlacement(0, G4ThreeVector(mv_door_x_/2,0,0.) + gate_pos,
+		      wallr_box_logic, "MUON_VETO_RWALL", lab_logic_, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(-mv_door_x_/2,0,0.) + gate_pos,
+		      walll_box_logic, "MUON_VETO_LWALL", lab_logic_, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,0.,mv_wall_z_/2) + gate_pos,
+		      doorf_box_logic, "MUON_VETO_FDOOR", lab_logic_, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,0.,-mv_wall_z_/2) + gate_pos,
+		      doorb_box_logic, "MUON_VETO_BDOOR", lab_logic_, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,mv_wall_y_/2,0.) + gate_pos,
+		      roof_box_logic, "MOUN_VETO_ROOF", lab_logic_, false, 0);
+
+    IonizationSD* rwallsd = new IonizationSD("/NEXT100/MUON_VETO_RWALL");
+    wallr_box_logic->SetSensitiveDetector(rwallsd);
+    G4SDManager::GetSDMpointer()->AddNewDetector(rwallsd);
+    IonizationSD* lwallsd = new IonizationSD("/NEXT100/MUON_VETO_LWALL");
+    walll_box_logic->SetSensitiveDetector(lwallsd);
+    G4SDManager::GetSDMpointer()->AddNewDetector(lwallsd);
+    
+    IonizationSD* fdoorsd = new IonizationSD("/NEXT100/MUON_VETO_FDOOR");
+    doorf_box_logic->SetSensitiveDetector(fdoorsd);
+    G4SDManager::GetSDMpointer()->AddNewDetector(fdoorsd);
+    IonizationSD* bdoorsd = new IonizationSD("/NEXT100/MUON_VETO_BDOOR");
+    doorb_box_logic->SetSensitiveDetector(bdoorsd);
+    G4SDManager::GetSDMpointer()->AddNewDetector(bdoorsd);
+
+    IonizationSD* roofsd = new IonizationSD("/NEXT100/MUON_VETO_ROOF");
+    roof_box_logic->SetSensitiveDetector(roofsd);
+    G4SDManager::GetSDMpointer()->AddNewDetector(roofsd);
+    
+    // visivility settings
+    if (mv_visibility_) { 
+      wallr_box_logic->SetVisAttributes(nexus::LightGrey());
+      walll_box_logic->SetVisAttributes(nexus::LightGrey());
+      doorf_box_logic->SetVisAttributes(nexus::LightGrey());
+      doorb_box_logic->SetVisAttributes(nexus::LightGrey());
+      roof_box_logic->SetVisAttributes(nexus::LightGrey());
+    }
+    else {
+      wallr_box_logic->SetVisAttributes(G4VisAttributes::GetInvisible());
+      walll_box_logic->SetVisAttributes(G4VisAttributes::GetInvisible());
+      doorf_box_logic->SetVisAttributes(G4VisAttributes::GetInvisible());
+      doorb_box_logic->SetVisAttributes(G4VisAttributes::GetInvisible());
+      roof_box_logic->SetVisAttributes(G4VisAttributes::GetInvisible());
+    }
+      
+    if (mv_verbosity_){
+      std::cout<<"Muon Veto Dimensions (cm)" <<std::endl;
+      std::cout<<"RIGHT WALL: "<< mv_wall_x_/cm << " x " << mv_wall_y_/cm << " x " << mv_wall_z_/cm <<std::endl;
+      std::cout<<"LEFT WALL: "<< mv_wall_x_/cm << " x " << mv_wall_y_/cm << "x" << mv_wall_z_/cm <<std::endl;
+      std::cout<<"FRONT DOOR: "<< mv_door_x_/cm << " x " << mv_door_y_/cm << " x " << mv_door_z_/cm <<std::endl;
+      std::cout<<"BACK DOOR DOOR: "<< mv_door_x_/cm << " x " << mv_door_y_/cm << "x" << mv_door_z_/cm <<std::endl;
+      std::cout<<"ROOF: "<< mv_roof_x_/cm << " x " << mv_roof_y_/cm << " x " << mv_roof_z_/cm <<std::endl;
+    }
+    
+  }
+
+  
 } //end namespace nexus

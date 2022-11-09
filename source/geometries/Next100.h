@@ -25,7 +25,7 @@ namespace nexus {
   class Next100Ics;
   class Next100InnerElements;
   class LSCHallA;
-  class Next100MuonVeto;
+  //class Next100MuonVeto;
   
   class Next100: public GeometryBase
   {
@@ -43,7 +43,7 @@ namespace nexus {
   private:
     void BuildLab();
     void Construct();
-
+    void ConstructMuonVeto();
 
   private:
     // Detector dimensions
@@ -61,7 +61,7 @@ namespace nexus {
     Next100Vessel*    vessel_;
     Next100Ics*       ics_;
     Next100InnerElements* inner_elements_;
-    Next100MuonVeto* muon_veto_;
+    //Next100MuonVeto* muon_veto_;
     
     BoxPointSampler* lab_gen_; ///< Vertex generator
 
@@ -79,6 +79,14 @@ namespace nexus {
 
     /// Whether or not to build muon veto.
     G4bool veto_walls_;
+
+    /// Muon veto dimensions
+    G4double mv_wall_x_, mv_wall_y_, mv_wall_z_;
+    G4double mv_door_x_, mv_door_y_, mv_door_z_;
+    G4double mv_roof_x_, mv_roof_y_, mv_roof_z_;
+    /// Muon veto conf
+    G4bool mv_visibility_;
+    G4bool mv_verbosity_;
     
   };
 
