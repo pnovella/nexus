@@ -321,18 +321,26 @@ namespace nexus {
     G4LogicalVolume* roof_box_logic  = new G4LogicalVolume(roof_box_solid,mat,"ROOF_BOX");
 
     G4ThreeVector gate_pos(0., 0., -gate_zpos_in_vessel_);
-    //G4ThreeVector gate_pos(0., 0., 0);
+
+    G4ThreeVector rel_pos;
+    G4LogicalVolume* vol_logic;
+    if (lab_walls_){
+      vol_logic = hallA_logic_;
+      rel_pos = G4ThreeVector(0., hallA_walls_->GetLSCHallACastleY(),hallA_walls_->GetLSCHallACastleZ());}
+    else {
+      vol_logic = lab_logic_;
+      rel_pos = gate_pos;}
     
-    new G4PVPlacement(0, G4ThreeVector(mv_door_x_/2,0,0.) + gate_pos,
-		      wallr_box_logic, "MUON_VETO_RWALL", lab_logic_, false, 0);
-    new G4PVPlacement(0, G4ThreeVector(-mv_door_x_/2,0,0.) + gate_pos,
-		      walll_box_logic, "MUON_VETO_LWALL", lab_logic_, false, 0);
-    new G4PVPlacement(0, G4ThreeVector(0.,0.,mv_wall_z_/2) + gate_pos,
-		      doorf_box_logic, "MUON_VETO_FDOOR", lab_logic_, false, 0);
-    new G4PVPlacement(0, G4ThreeVector(0.,0.,-mv_wall_z_/2) + gate_pos,
-		      doorb_box_logic, "MUON_VETO_BDOOR", lab_logic_, false, 0);
-    new G4PVPlacement(0, G4ThreeVector(0.,mv_wall_y_/2,0.) + gate_pos,
-		      roof_box_logic, "MOUN_VETO_ROOF", lab_logic_, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(mv_door_x_/2,0,0.) + rel_pos,
+		      wallr_box_logic, "MUON_VETO_RWALL", vol_logic, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(-mv_door_x_/2,0,0.) + rel_pos,
+		      walll_box_logic, "MUON_VETO_LWALL", vol_logic, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,0.,mv_wall_z_/2) + rel_pos,
+		      doorf_box_logic, "MUON_VETO_FDOOR", vol_logic, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,0.,-mv_wall_z_/2) + rel_pos,
+		      doorb_box_logic, "MUON_VETO_BDOOR", vol_logic, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,mv_wall_y_/2,0.) + rel_pos,
+		      roof_box_logic, "MOUN_VETO_ROOF", vol_logic, false, 0);
 
     IonizationSD* rwallsd = new IonizationSD("/NEXT100/MUON_VETO_RWALL");
     wallr_box_logic->SetSensitiveDetector(rwallsd);
