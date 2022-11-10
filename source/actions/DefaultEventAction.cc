@@ -28,7 +28,7 @@ namespace nexus {
 REGISTER_CLASS(DefaultEventAction, G4UserEventAction)
 
   DefaultEventAction::DefaultEventAction():
-    G4UserEventAction(), nevt_(0), nupdate_(10), energy_min_(0.), energy_max_(DBL_MAX)
+G4UserEventAction(), nevt_(0), nupdate_(10), energy_min_(0.), energy_max_(DBL_MAX), save_trj_(true)
   {
     msg_ = new G4GenericMessenger(this, "/Actions/DefaultEventAction/");
 
@@ -46,10 +46,15 @@ REGISTER_CLASS(DefaultEventAction, G4UserEventAction)
     max_energy_cmd.SetUnitCategory("Energy");
     max_energy_cmd.SetRange("max_energy>0.");
 
+    msg_->DeclareProperty("save_trj", save_trj_,
+			  "Save trajectories (particles) in event?");
+
     PersistencyManager* pm = dynamic_cast<PersistencyManager*>
       (G4VPersistencyManager::GetPersistencyManager());
 
     pm->SaveNumbOfInteractingEvents(true);
+
+    pm->StoreParticles(save_trj_);
   }
 
 
@@ -106,6 +111,8 @@ REGISTER_CLASS(DefaultEventAction, G4UserEventAction)
       PersistencyManager* pm = dynamic_cast<PersistencyManager*>
         (G4VPersistencyManager::GetPersistencyManager());
 
+      pm->StoreParticles(save_trj_);
+      
       if (!event->IsAborted() && edep>0) {
 	pm->InteractingEvent(true);
       } else {

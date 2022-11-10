@@ -45,7 +45,7 @@ namespace nexus {
     void InteractingEvent(G4bool);
     void StoreSteps(G4bool);
     void SaveNumbOfInteractingEvents(G4bool);
-
+    void StoreParticles(G4bool);
     ///
     virtual G4bool Store(const G4Event*);
     virtual G4bool Store(const G4Run*);
@@ -66,7 +66,8 @@ namespace nexus {
     void StoreIonizationHits(G4VHitsCollection*);
     void StoreSensorHits(G4VHitsCollection*);
     void StoreSteps();
-
+    
+      
     void SaveConfigurationInfo(G4String history);
 
 
@@ -84,6 +85,8 @@ namespace nexus {
     G4bool interacting_evt_; ///< Has the current event interacted in ACTIVE?
     G4bool save_ie_numb_; ///< Should we save the number of interacting events in the configuration table?
 
+    G4bool store_trjs_; ///< Should we store the trajectories for the current event?
+    
     G4String event_type_; ///< event type: bb0nu, bb2nu, background or not set
 
     int64_t saved_evts_; ///< number of events to be saved
@@ -122,6 +125,9 @@ namespace nexus {
   { return false; }
   inline G4bool PersistencyManager::Retrieve(G4VPhysicalVolume*&)
   { return false; }
+
+  inline void PersistencyManager::StoreParticles(G4bool trj)
+  { store_trjs_ = trj; }
 
 } // namespace nexus
 

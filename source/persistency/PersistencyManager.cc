@@ -142,7 +142,8 @@ G4bool PersistencyManager::Store(const G4Event* event)
     StoreSteps();
 
   // Store the trajectories of the event
-  StoreTrajectories(event->GetTrajectoryContainer());
+  if (store_trjs_){
+    StoreTrajectories(event->GetTrajectoryContainer());}
 
   // Store ionization hits and sensor hits
   ihits_ = nullptr;
