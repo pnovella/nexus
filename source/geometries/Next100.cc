@@ -331,13 +331,13 @@ namespace nexus {
       vol_logic = lab_logic_;
       rel_pos = gate_pos;}
     
-    new G4PVPlacement(0, G4ThreeVector(mv_door_x_/2,0,0.) + rel_pos,
-		      wallr_box_logic, "MUON_VETO_RWALL", vol_logic, false, 0);
     new G4PVPlacement(0, G4ThreeVector(-mv_door_x_/2,0,0.) + rel_pos,
+		      wallr_box_logic, "MUON_VETO_RWALL", vol_logic, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(mv_door_x_/2,0,0.) + rel_pos,
 		      walll_box_logic, "MUON_VETO_LWALL", vol_logic, false, 0);
-    new G4PVPlacement(0, G4ThreeVector(0.,0.,mv_wall_z_/2) + rel_pos,
-		      doorf_box_logic, "MUON_VETO_FDOOR", vol_logic, false, 0);
     new G4PVPlacement(0, G4ThreeVector(0.,0.,-mv_wall_z_/2) + rel_pos,
+		      doorf_box_logic, "MUON_VETO_FDOOR", vol_logic, false, 0);
+    new G4PVPlacement(0, G4ThreeVector(0.,0.,mv_wall_z_/2) + rel_pos,
 		      doorb_box_logic, "MUON_VETO_BDOOR", vol_logic, false, 0);
     new G4PVPlacement(0, G4ThreeVector(0.,mv_wall_y_/2,0.) + rel_pos,
 		      roof_box_logic, "MOUN_VETO_ROOF", vol_logic, false, 0);
